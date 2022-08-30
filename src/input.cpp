@@ -221,6 +221,8 @@ void ndi_input::ndi_audio_thread()
 	NDIlib_audio_frame_v3_t ndi_audio_frame;
 	obs_source_audio obs_audio_frame = {};
 
+	size_t channel_count, channel_num;
+
 	while (running) {
 		if (ndiLib->recv_get_no_connections(ndi_recv) == 0) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -236,7 +238,7 @@ void ndi_input::ndi_audio_thread()
 			ndi_audio_frame.timestamp = 0;
 		}
 
-		size_t channel_count = std::min(8, ndi_audio_frame.no_channels);
+		channel_count = std::min(MAX_AV_PLANES, ndi_audio_frame.no_channels);
 
 		obs_audio_frame.speakers = ndi_audio_layout_to_obs(channel_count);
 		obs_audio_frame.timestamp = (uint64_t)(ndi_audio_frame.timestamp * 100);
@@ -244,8 +246,9 @@ void ndi_input::ndi_audio_thread()
 		obs_audio_frame.format = AUDIO_FORMAT_FLOAT_PLANAR;
 		obs_audio_frame.frames = ndi_audio_frame.no_samples;
 
-		for (size_t i = 0; i < channel_count; ++i)
-			obs_audio_frame.data[i] = (uint8_t *)(&ndi_audio_frame.p_data[i * ndi_audio_frame.channel_stride_in_bytes]);
+		for (channel_num = 0; channel_num < channel_count; ++channel_num)
+			obs_audio_frame.data[channel_num] =
+				ndi_audio_frame.p_data + (channel_num * ndi_audio_frame.channel_stride_in_bytes);
 
 		obs_source_output_audio(source, &obs_audio_frame);
 
