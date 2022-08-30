@@ -235,6 +235,7 @@ void ndi_input::ndi_audio_thread()
 		// Reports seem to suggest that NDI can provide audio without timestamps.
 		if (!ndi_audio_frame.timestamp || ndi_audio_frame.timestamp == NDIlib_recv_timestamp_undefined) {
 			do_log(LOG_WARNING, "[ndi_input::ndi_audio_thread] Missing timestamp from NDI!");
+			//ndi_audio_frame.timestamp = 0;
 			ndiLib->recv_free_audio_v3(ndi_recv, &ndi_audio_frame);
 			continue;
 		}
